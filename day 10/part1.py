@@ -7,7 +7,7 @@ from aoc_utils import test_input, get_raw_data, process_data, test_input_2, find
 def main(data: str) -> int:
     """part 1 of the puzzle """
     max_path = find_max_path(*process_data(data))
-    assert len(max_path)%2==1, "even len max path"
+    assert len(max_path) % 2 == 1, "even len max path"
     return len(max_path)//2
 
 

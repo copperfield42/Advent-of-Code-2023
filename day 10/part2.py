@@ -1,10 +1,10 @@
 # https://adventofcode.com/2023/day/10
 from __future__ import annotations
 
-from aoc_utils import test_input, get_raw_data, process_data, walk, MazePath, find_max_path, test_input_2, Point, ir
-import aoc_recipes
+from aoc_utils import get_raw_data, process_data, find_max_path, Point
 import numpy as np
-from aoc_recipes import DIRECCIONES
+from aoc_recipes import DIRECCIONES, all_points2, is_valid, vecinos, where2, show_bool_matrix2 as show
+
 
 test_input_3 = """
 ...........
@@ -57,19 +57,18 @@ L7JLJL-JLJLJL--JLJ.L
 """
 
 
-def inflate(path:MazePath, maze:np.ndarray[str,str]) -> np.ndarray[bool,bool]:
-    x = max(p.x for p in path)+1
-    y = max(p.y for p in path)+1
+def inflate(path: set[Point], maze: np.ndarray[str, str]) -> np.ndarray[bool, bool]:
+    x = max(p.x for p in path) + 1
+    y = max(p.y for p in path) + 1
     pshape = (3+x*3, 3+y*3)
     plain = np.zeros(pshape, dtype=bool)
-    validator = lambda p: aoc_recipes.is_valid(p,pshape)
     for p in path:
-        new = p*3+(1+1j)
+        new = p*3 + (2, 2)
         plain[new] = True
         match maze[p]:
             case "S":
-                for v in aoc_recipes.make_vecinos(new, validator, direcciones=DIRECCIONES["*"]):
-                    plain[v]=True
+                for v in vecinos(new, direcciones=DIRECCIONES["*"]):
+                    plain[v] = True
             case "|":
                 plain[new + DIRECCIONES["^"]] = True
                 plain[new + DIRECCIONES["v"]] = True
@@ -91,63 +90,46 @@ def inflate(path:MazePath, maze:np.ndarray[str,str]) -> np.ndarray[bool,bool]:
     return plain
 
 
-def desinflate(matrix:np.ndarray[bool,bool]) -> np.ndarray[bool. bool]:
-    X,Y = matrix.shape
-    result = np.zeros(((X-3)//3, (Y-3)//3), dtype=bool)
-    
-
-def fill_gass(matrix:np.ndarray[bool, bool], initial:Point=Point(0,0)) -> np.ndarray[bool,bool]:
+def fill_gas(matrix: np.ndarray[bool, bool], initial: Point = Point(0, 0)) -> np.ndarray[bool, bool]:
     result = np.zeros_like(matrix, dtype=bool)
-    points = set(ir.starmap(Point, aoc_recipes.where(~matrix)))
+    points = set(where2(~matrix))
     work = {initial}
     while work:
         p = work.pop()
         result[p] = True
         points.discard(p)
-        work.update(np for np in aoc_recipes.vecinos(p) if np in points)
+        work.update(nextp for nextp in vecinos(p) if nextp in points)
     return result
     
 
-def show(matrix:np.ndarray[bool,bool]):
-    X,Y = matrix.shape
-    for x in range(X):
-        for y in range(Y):
-            print(aoc_recipes.BLACK_char if matrix[x,y] else aoc_recipes.WHITE_char, sep="",end="")
-        print()
-    print()
-
-def main(data: str, mostrar:bool=False) -> int:
+def main(data: str, mostrar: bool = False) -> int:
     """part 2 of the puzzle """
     S, maze = process_data(data)
-    path = find_max_path(S, maze)
+    path = set(find_max_path(S, maze))
     plain = inflate(path, maze)
-    if mostrar: show(plain)
-    outside = fill_gass(plain)
-    if mostrar: show(filled)
+    outside = fill_gas(plain)
+    if mostrar:
+        show(plain)
+        show(outside)
     result = 0
-    X,Y = maze.shape
-    for x in range(X):
-        for y in range(Y):
-            p = Point(x,y)
-            if p in path:
-                continue
-            ip = p*3+(1+1j)
-            if aoc_recipes.is_valid(ip, outside.shape):
-                if not outside[ip]:
-                    result +=1
-                    
+    for p in all_points2(maze.shape):
+        if p in path:
+            continue
+        ip = p*3 + (2, 2)
+        if is_valid(ip, outside.shape):
+            if not outside[ip]:
+                result += 1
     return result
 
 
 def test() -> bool:
-    tests=[
-        (test_input_3,4),
-        (test_input_4,4),
-        (test_input_5,8),
-        (test_input_6,10),
+    tests = [
+        (test_input_3, 4),
+        (test_input_4, 4),
+        (test_input_5, 8),
+        (test_input_6, 10),
         ]
-    return all(main(t)==r for t,r in tests)
-
+    return all(main(t) == r for t, r in tests)
 
 
 if __name__ == "__main__":

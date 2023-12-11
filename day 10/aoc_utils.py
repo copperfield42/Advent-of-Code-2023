@@ -1,13 +1,12 @@
 # https://adventofcode.com/2023/day/10
-#from __future__ import annotations
+from __future__ import annotations
 
-from typing import Iterator, Iterable
+from typing import Iterable, overload, Any
 import itertools_recipes as ir
 import numpy as np
 import aoc_recipes
 from aoc_recipes import Point, DIRECCIONES, is_valid
 from collections.abc import Sequence
-
 
 
 test_input = """
@@ -27,7 +26,7 @@ LJ...
 """
 
 
-def walk(maze:np.ndarray[str,str], start:Point, initial_dir:Point) -> Iterable[Point]:
+def walk(maze: np.ndarray[str, str], start: Point, initial_dir: Point) -> Iterable[Point]:
     pos = start
     move = initial_dir
     yield pos
@@ -35,25 +34,25 @@ def walk(maze:np.ndarray[str,str], start:Point, initial_dir:Point) -> Iterable[P
         new = pos + move
         if not is_valid(new, maze.shape):
             raise IndexError("outside of the maze")
-        if maze[new]=="|" and move in {DIRECCIONES["v"], DIRECCIONES["^"]}:
+        if maze[new] == "|" and move in {DIRECCIONES["v"], DIRECCIONES["^"]}:
             pos = new
-        elif maze[new]=="-" and move in {DIRECCIONES["<"], DIRECCIONES[">"]}:
+        elif maze[new] == "-" and move in {DIRECCIONES["<"], DIRECCIONES[">"]}:
             pos = new
-        elif maze[new]=="L" and move in {DIRECCIONES["v"], DIRECCIONES["<"]}:
+        elif maze[new] == "L" and move in {DIRECCIONES["v"], DIRECCIONES["<"]}:
             pos = new
-            move = DIRECCIONES[">"] if move==DIRECCIONES["v"] else DIRECCIONES["^"]
-        elif maze[new]=="J" and move in {DIRECCIONES["v"], DIRECCIONES[">"]}:
+            move = DIRECCIONES[">"] if move == DIRECCIONES["v"] else DIRECCIONES["^"]
+        elif maze[new] == "J" and move in {DIRECCIONES["v"], DIRECCIONES[">"]}:
             pos = new
-            move = DIRECCIONES["<"] if move==DIRECCIONES["v"] else DIRECCIONES["^"]
-        elif maze[new]=="7" and move in {DIRECCIONES["^"], DIRECCIONES[">"]}:
+            move = DIRECCIONES["<"] if move == DIRECCIONES["v"] else DIRECCIONES["^"]
+        elif maze[new] == "7" and move in {DIRECCIONES["^"], DIRECCIONES[">"]}:
             pos = new
-            move = DIRECCIONES["<"] if move==DIRECCIONES["^"] else DIRECCIONES["v"]
-        elif maze[new]=="F" and move in {DIRECCIONES["^"], DIRECCIONES["<"]}:
+            move = DIRECCIONES["<"] if move == DIRECCIONES["^"] else DIRECCIONES["v"]
+        elif maze[new] == "F" and move in {DIRECCIONES["^"], DIRECCIONES["<"]}:
             pos = new
-            move = DIRECCIONES[">"] if move==DIRECCIONES["^"] else DIRECCIONES["v"]
-        elif maze[new]==".":
+            move = DIRECCIONES[">"] if move == DIRECCIONES["^"] else DIRECCIONES["v"]
+        elif maze[new] == ".":
             raise ValueError("find ground")
-        elif maze[new]=="S":
+        elif maze[new] == "S":
             pos = new
             yield pos
             return
@@ -66,28 +65,37 @@ def walk(maze:np.ndarray[str,str], start:Point, initial_dir:Point) -> Iterable[P
 
 class MazePath(Sequence[Point]):
 
-    def __init__(self, path:Iterable[Point]):
+    def __init__(self, path: Iterable[Point]):
         self._data = tuple(path)
 
-    def __getitem__(self, index):
+    @overload
+    def __getitem__(self, index: int) -> Point: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> tuple[Point,...]: ...
+
+    def __getitem__(self, index: int | slice) -> Point | tuple[Point, ...]:
         return self._data[index]
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._data)
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, type(self)):
             return False
         return sorted(self._data) == sorted(other._data)
 
-    def __hash__(self):
+    def __iter__(self) -> Iterable[Point]:
+        return iter(self._data)
+
+    def __hash__(self) -> int:
         return hash(frozenset(self._data))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{type(self).__name__}({self._data})"
 
 
-def find_max_path(start:Point, maze:np.ndarray[str,str]) -> MazePath:
+def find_max_path(start: Point, maze: np.ndarray[str, str]) -> MazePath:
     paths = set()
     for dir_move in DIRECCIONES["+"]:
         try:
@@ -96,10 +104,11 @@ def find_max_path(start:Point, maze:np.ndarray[str,str]) -> MazePath:
             pass
     return max(paths, key=len)
 
-def process_data(data: str) -> tuple[Point,np.ndarray[str,str]]:
+
+def process_data(data: str) -> tuple[Point, np.ndarray[str, str]]:
     """transform the raw data into a processable form"""
     maze = np.array([list(line) for line in ir.interesting_lines(data)], dtype=str)
-    s = Point(*next(aoc_recipes.where(maze=="S")))
+    s = Point(*next(aoc_recipes.where(maze == "S")))
     return s, maze
 
 
