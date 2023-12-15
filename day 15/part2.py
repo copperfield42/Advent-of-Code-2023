@@ -37,11 +37,12 @@ def main(data: str) -> int:
                 pass
         else:
             new = Lens(label, focal_len)
-            if label in hashmap[hash_label]:
+            try:
                 i = hashmap[hash_label].index(label)
-                hashmap[hash_label][i] = new
-            else:
+            except ValueError:
                 hashmap[hash_label].append(new)
+            else:  # no error
+                hashmap[hash_label][i] = new
     return sum((k+1)*i*x.focal for k, v in hashmap.items() for i, x in enumerate(v, 1))
 
 
