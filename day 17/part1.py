@@ -19,8 +19,8 @@ def neighbors[Path: tuple[Point, ...]](path: Path, grafo: np.ndarray[int,int], m
                 continue
         except IndexError:
             pass
-            if move != DIRECCIONES[">"]:
-                continue
+            #if move != DIRECCIONES[">"]:
+            #    continue
         new_paths = [(new,)]
         for n in range(max_len):
             new_paths.append( new_paths[-1] + (new_paths[-1][-1]+move,) )
@@ -28,7 +28,7 @@ def neighbors[Path: tuple[Point, ...]](path: Path, grafo: np.ndarray[int,int], m
             if len(p) < min_len:
                 continue
             if all(validator(x) for x in p):
-                yield path + p, len(p)
+                yield path + p, len(p), move
 
             
             
@@ -52,10 +52,10 @@ def shortest_path_matrix[Matrix:np.ndarray[Any, Any], Path:tuple[Point, ...], Co
     visitado = set()
     is_meta = partial(eq, meta)
     queue = PriorityQueue()
-    queue.add_task( (initial_cost,(inicio,),Point(0,0),0), initial_cost )
+    queue.add_task( (initial_cost, 0, Point(0,0), (inicio,)), initial_cost )
     while queue:
         record = queue.pop_task()
-        old_cost, path, dir_move, num_step = record  # @hyper-neutrino in youtube
+        old_cost, dir_move, num_step, path = record  # @hyper-neutrino in youtube
         if (path[-1], dir_move, num_step) in visitado:
             continue
         visitado.add((path[-1], dir_move, num_step))
@@ -63,16 +63,16 @@ def shortest_path_matrix[Matrix:np.ndarray[Any, Any], Path:tuple[Point, ...], Co
             callback(meta.distance_t(path[-1]))
         if is_meta(path[-1]):
             return old_cost, path
-        for new_path, n in neighbors(path, tablero):
+        for new_path, n, direc in neighbors(path, tablero):
             new_cost = cost(path, new_path, old_cost, tablero)
-            new_record = new_cost, new_path, new_path[-1]-new_path[-2], n
+            new_record = new_cost, n, direc, new_path
             queue.add_task( new_record, new_cost )
     return float("inf"), None
 
 
 def callback_bar(pbar:progress_bar, progress:int):
-        pbar.n = pbar.total - progress
-        pbar.update()
+    pbar.n = pbar.total - progress
+    pbar.update()
 
 def show_path(tablero: np.ndarray[Any, Any], path: Iterable[Point]):
     mapa = np.zeros_like(tablero, dtype=bool)
