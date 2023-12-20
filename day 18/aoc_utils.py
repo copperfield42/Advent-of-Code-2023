@@ -1,9 +1,10 @@
 # https://adventofcode.com/2023/day/18
 from __future__ import annotations
-from typing import Iterable
+from typing import Iterable, Sequence
 import itertools_recipes as ir
 from aoc_recipes import DIRECCIONES, Point
-
+from dataclasses import dataclass
+from fractions import Fraction
 
 MOVES = {
     "U": DIRECCIONES["^"],
@@ -31,12 +32,51 @@ U 2 (#7a21e3)
 """
 
 
+@dataclass
+class Polygon:
+    points: Sequence[Point]
+
+    @property
+    def area(self) -> int | Fraction:
+        # https://en.wikipedia.org/wiki/Shoelace_formula
+        points = self.points
+        size = len(points)
+        a = abs(sum(points[i].x * (points[(i+1) % size].y-points[i-1].y) for i in range(size)))
+        if a % 2 == 0:
+            return a//2
+        return Fraction(a, 2)
+
+    def __len__(self) -> int:
+        """boundary points"""
+        return sum(a.distance_t(b) for a, b in ir.pairwise(self.points))
+
+    @property
+    def interior_points(self) -> int | Fraction:
+        # https://en.wikipedia.org/wiki/Pick%27s_theorem
+        size = len(self)
+        if size % 2 == 0:
+            size //= 2
+        else:
+            size = Fraction(size, 2)
+        return self.area + 1 - size
+
+
+def make_polygon(data: Iterable[tuple[Point, int]], initial: Point = Point(0, 0)) -> Polygon:
+    digger = initial
+    result = [initial]
+    for move, n in data:
+        new = digger + move * n
+        result.append(new)
+        digger = new
+    assert initial == result[-1], "is not a closed polygon"
+    return Polygon(result)
+
+
 def process_data(data: str) -> Iterable[tuple[Point, int, str]]:
     """transform the raw data into a processable form"""
     for line in ir.interesting_lines(data):
         move, n, rgb = line.split()
         yield MOVES[move], int(n), rgb[2:-1]
-    pass
 
 
 def get_raw_data(path: str = "./input.txt") -> str:
