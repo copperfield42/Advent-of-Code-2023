@@ -1,6 +1,6 @@
 # https://adventofcode.com/2023/day/20
 from __future__ import annotations
-from typing import Iterable, Any, Final, NamedTuple
+from typing import Iterable, Any, Final, NamedTuple, Callable
 import itertools_recipes as ir
 from dataclasses import dataclass, field
 from collections import deque
@@ -73,10 +73,8 @@ class Conjunction(Module):
 
 @dataclass
 class MODError:
-    record: list[Signal] = field(default_factory=list)
 
     def __call__(self, data: Signal) -> list[Signal]:
-        self.record.append(data)
         return []
 
 
@@ -103,10 +101,8 @@ class PulsePropagation:
                 if isinstance(con := modules.get(c), Conjunction):
                     con.memory[mod.name] = False
         self.modules = modules
-        self.low = 0
-        self.high = 0
 
-    def __call__(self, pulse: bool = LOW_PULSE, show: bool = False, output=None) -> tuple[int, int]:
+    def __call__(self, pulse: bool = LOW_PULSE, show: bool = False, output: Callable[[Signal], list[Signal]] = None, callback: Callable[[Signal], None] = None) -> tuple[int, int]:
         stack = deque(self.modules["broadcaster"](pulse))
         low = pulse == LOW_PULSE
         high = pulse == HIGH_PULSE
@@ -116,6 +112,8 @@ class PulsePropagation:
             pprint(self.modules)
         while stack:
             s = stack.popleft()
+            if callback:
+                callback(s)
             if s.pulse:
                 high += 1
             else:
