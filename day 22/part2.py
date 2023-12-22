@@ -5,7 +5,7 @@ from aoc_recipes import progress_bar
 
 
 def main(data: str) -> int:
-    """part 1 of the puzzle """
+    """part 2 of the puzzle """
     initial = sorted(progress_bar(process_data(data), desc="reading"), key=lambda b: b.high[0])
     settle = settle_bricks(progress_bar(initial, desc="settling"))
     result = 0
@@ -14,18 +14,16 @@ def main(data: str) -> int:
         new = [x for x in settle if x != to_destroy]
         for b in settle_bricks_it(new):
             if check[b.brick_id] != b:
-                break
-        else:  # no break
-            result += 1
+                result += 1
     return result
 
 
 def test() -> bool:
-    return main(test_input) == 5
+    return main(test_input) == 7
 
 
 if __name__ == "__main__":
-    assert test(), "fail test part 1"
-    print("pass test part 1\n")
-    part1_data = get_raw_data()
-    print("solution part1:", main(part1_data))  #
+    assert test(), "fail test part 2"
+    print("pass test part 2\n")
+    part2_data = get_raw_data()
+    print("solution part2:", main(part2_data))  #

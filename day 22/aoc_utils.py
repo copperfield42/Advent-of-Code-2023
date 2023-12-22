@@ -1,12 +1,12 @@
 # https://adventofcode.com/2023/day/22
 from __future__ import annotations
 
-from typing import Iterator, Iterable, Self
+from typing import Iterable, Self
 import itertools_recipes as ir
 from ast import literal_eval
 from aoc_recipes import Point3
 from dataclasses import dataclass
-from functools import cached_property, cache
+from functools import cached_property
 
 
 test_input = """
@@ -19,10 +19,12 @@ test_input = """
 1,1,8~1,1,9
 """
 
+
 @dataclass(eq=True, frozen=True)
 class Brick:
     ini: Point3
     fin: Point3
+    brick_id: int = 0
 
     @cached_property
     def high(self) -> tuple[int, int]:
@@ -63,7 +65,7 @@ class Brick:
 
     def move_vertically(self, z: int) -> Self:
         move = Point3(0, 0, z)
-        return type(self)(self.ini + move, self.fin + move)
+        return type(self)(self.ini + move, self.fin + move, self.brick_id)
 
     def collide(self, other: Brick) -> bool:
         a, b = self.high
@@ -73,12 +75,37 @@ class Brick:
         return False
 
 
+def settle_bricks(iterable: Iterable[Brick]) -> list[Brick]:
+    result = []
+    for b in iterable:
+        while b.high[0] > 1:
+            new = b.move_vertically(-1)
+            if any(x.collide(new) for x in result):
+                break
+            else:
+                b = new
+        result.append(b)
+    return result
+
+
+def settle_bricks_it(iterable: Iterable[Brick]) -> Iterable[Brick]:
+    seen = []
+    for b in iterable:
+        while b.high[0] > 1:
+            new = b.move_vertically(-1)
+            if any(x.collide(new) for x in seen):
+                break
+            else:
+                b = new
+        seen.append(b)
+        yield b
+
+
 def process_data(data: str) -> Iterable[Brick]:
     """transform the raw data into a processable form"""
-    for line in ir.interesting_lines(data):
+    for i, line in enumerate(ir.interesting_lines(data), 1):
         a, b = line.split("~")
-        yield Brick(Point3(*literal_eval(a)), Point3(*literal_eval(b)))
-    pass
+        yield Brick(Point3(*literal_eval(a)), Point3(*literal_eval(b)), i)
 
 
 def get_raw_data(path: str = "./input.txt") -> str:
