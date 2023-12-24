@@ -1,7 +1,56 @@
 # https://adventofcode.com/2023/day/23
 from __future__ import annotations
-from aoc_utils import test_input, get_raw_data, process_data, longest_path_grafo
+from aoc_utils import test_input, get_raw_data, process_data, neighbors
 from aoc_recipes import where, Point
+from contextlib import contextmanager
+import sys
+
+
+def topologicalSortUtil(v: Point, stack: list[Point], visited: set[Point], matrix: np.ndarray[str, str]):
+    # https://www.geeksforgeeks.org/find-longest-path-directed-acyclic-graph/
+    visited.add(v)
+    for i in neighbors(v, matrix):
+        if i in visited:
+            continue
+        topologicalSortUtil(i, stack, visited, matrix)
+    stack.append(v)
+
+
+class Distances(dict):
+
+    def __missing__(self, key):
+        return float("-inf")
+
+
+@contextmanager
+def set_recursion_limit(limit):
+    old = sys.getrecursionlimit()
+    new = max(limit, old)
+    try:
+        sys.setrecursionlimit(new)
+        yield
+    finally:
+        sys.setrecursionlimit(old)
+
+
+def longest_path_grafo(inicio: Point, goal: Point, matrix: np.ndarray[str, str]) -> int:
+    # https://www.geeksforgeeks.org/find-longest-path-directed-acyclic-graph/
+    stack = []
+    visited = set()
+    dist = Distances()
+    with set_recursion_limit(matrix.shape[0]*matrix.shape[1]):
+        topologicalSortUtil(inicio, stack, visited, matrix)
+
+    dist[inicio] = 0
+
+    while stack:
+        u = stack.pop()
+        if dist[u] != float("-inf"):
+            for i in neighbors(u, matrix):
+                new = dist[u] + 1
+                if dist[i] < new:
+                    dist[i] = new
+    return dist[goal]
 
 
 def main(data: str) -> int:
