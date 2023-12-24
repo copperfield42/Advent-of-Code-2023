@@ -160,4 +160,5 @@ cython_debug/
 .idea/
 
 # puzzle inputs
-input.*
+input.txt
+/*/input.txt
