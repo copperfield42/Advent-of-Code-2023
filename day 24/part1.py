@@ -6,7 +6,6 @@ from aoc_recipes import Point
 from dataclasses import dataclass
 from functools import cached_property
 from itertools_recipes import dotproduct, combinations
-import math
 from fractions import Fraction
 import operator
 
@@ -38,14 +37,13 @@ class Recta:
             return (-b * y - c) / a
         return a*x + b*y + c
 
-    def find_time(self, value:Point):
+    def find_time(self, value: Point) -> Fraction:
         if self(*value) != 0:
             raise ValueError("is not a point of this Line")
         if self.vector.x:
             return Fraction(value.x - self.ini.x, self.vector.x)
         if self.vector.y:
             return Fraction(value.y - self.ini.y, self.vector.y)
-        
 
 
 def are_codirectional[T: Iterable[int]](a: T, b: T) -> bool:
@@ -63,7 +61,6 @@ def find_intersection(r1: Recta, r2: Recta) -> Point | Recta | None:
         else:
             return None
     a1, b1, c1 = r1.coeff
-    #a2, b2, c2 = r2.coeff
     s1, s2, s3 = map(operator.add, r1.coeff, r2.coeff)
     x = Fraction(s3*b1 - s2*c1, s2*a1 - s1*b1)
     y = r1(x)
@@ -73,8 +70,6 @@ def find_intersection(r1: Recta, r2: Recta) -> Point | Recta | None:
 def main(data: str, value_range: tuple[int, int] = (200000000000000, 400000000000000), show: bool=False) -> int:
     """part 1 of the puzzle """
     rectas = [Recta(Point(p.x, p.y), Point(v.x, v.y)) for p, v in process_data(data)]
-    # print(rectas)
-    # assert all(r(*r.ini) == 0 for r in rectas)
     result = 0
     a, b = value_range
     r1: Recta
@@ -94,11 +89,10 @@ def main(data: str, value_range: tuple[int, int] = (200000000000000, 40000000000
             t2 = r2.find_time(inter)
             if show:
                 print(f"intersect inside at {t1=} {t2=}",)
-            result += 1 if t1>=0 and t2>=0 else 0
+            result += 1 if t1 >= 0 and t2 >= 0 else 0
         else:
             if show:
                 print("intersect outside")
-        #    raise RuntimeError("invalid state")
 
     return result
 
