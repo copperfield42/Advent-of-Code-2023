@@ -162,4 +162,4 @@ cython_debug/
 # puzzle inputs
 input.txt
 /*/input.txt
-.txt
+*.txt
